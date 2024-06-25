@@ -1,0 +1,47 @@
+---
+# tasks file for 2do_parcial
+
+- debug:
+    msg: "Tareas del 2do Parcial"
+
+- name: "Directorios"
+    shell: mkdir -p /tmp/2do_parcial/{alumno,equipo}
+    become: yes
+    args:
+      creates: /tmp/2do_parcial
+
+  - name: "Obtener IP"
+    command: curl -s ifconfig.me
+    register: ip
+    changed_when: false
+
+  - name: "Obtener Distribucion"
+    command: grep "model name" /proc/cpuinfo |tail -n1 |awk '{print $6}'
+    register: distribucion
+    changed_when: false
+
+  - name: "Obtener Cores"
+    command: nproc
+    register: cores
+    changed_when: false
+
+  - name: "Crear archivo datos_equipo.txt"
+    template:
+      src: datos_equipo.txt.j2
+      dest: /tmp/alumno/datos_equipo.txt
+      mode: 0644
+
+  - name: "Crear archivo datos_alumno.txt"
+    template:
+      src: datos_alumno.txt.j2
+      dest: /tmp/alumno/datos_alumno.txt
+      mode: 0644
+
+  - name: "Sudoers"
+    lineinfile:
+      path: /etc/sudoers
+      state: present
+    regexp: '^%2PSupervisores'
+    line: '%2PSupervisores ALL=(ALL) NOPASSWD:ALL'
+    validate: 'visudo -cf %s'
+
